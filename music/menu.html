@@ -1,0 +1,146 @@
+<div id="music-app">
+	<div class="menu-screen source" id="music" data-icon="music.svg" data-menu-title="Music" data-stylesheet="music.css">
+		
+		<header>
+			<div class="back-button master"></div>
+			<h1>Music</h1>
+			
+			<menu-tabs
+				v-bind:tabs="tabs"
+				v-model="selectedTab"
+			></menu-tabs>
+		</header>
+		
+		<menu-tabs
+			class="main"
+			v-bind:tabs="tabs"
+			v-model="selectedTab"
+		></menu-tabs>
+		
+		<div class="scroll-area" v-show="selectedTab == 'home'">
+			<div class="menu-content">
+				
+			</div>
+		</div>
+		
+		<div class="scroll-area" v-show="selectedTab == 'artists'">
+			<div class="menu-content">
+				<div class="search-container">
+					<input type="search" autocorrect="off" placeholder="All music"/>
+				</div>
+			</div>
+			<div class="menu-content wide">
+				<div class="artist-collection">
+					<artist-item
+				    	v-for="artist in artists"
+				      	v-bind:artist="artist"
+				      	v-bind:key="artist.id"
+				    ></artist-item>
+				</div>
+			</div>
+		</div>
+		
+		<div class="scroll-area" v-show="selectedTab == 'albums'">
+			<div class="menu-content">
+				<div class="search-container">
+					<input type="search" autocorrect="off" placeholder="All music"/>
+				</div>
+			</div>
+			<div class="menu-content wide">
+				<div class="album-collection">
+					<album-item
+				    	v-for="album in albums"
+				      	v-bind:album="album"
+				      	v-bind:key="album.id"
+				    ></album-item>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="menu-screen full-width" v-for="item in navStack" v-bind:id="'music-navstack-item-'+item.id" v-bind:data-menu-title="(item.type == 'artist') ? item.artist : item.name" data-parent-extension="music">
+		<header v-bind:class="{dark: item.type == 'artist', 'always-top opaque-scroll transparent top-hide-title': item.type == 'album' || (item.type == 'artist' && item.img)}">
+			<div class="back-button master"></div>
+			<h1 v-if="item.type != 'artist'">{{ item.name }}</h1>
+			<h1 v-else>{{ item.artist }}</h1>
+		</header>
+		
+		
+		<div class="scroll-area" v-if="item.type != 'placeholder'">
+			<div class="artist-header" v-if="item.type == 'artist' && item.img" v-bind:style="{backgroundImage: 'url('+item.artistImg+')'}">
+				<h1>{{ item.artist }}</h1>
+			</div>
+			<div class="menu-split">
+				<div class="menu-content-wrap left no-divider normal-only">
+					<div class="menu-content no-padding-right" v-bind:class="{'no-padding-top': item.type == 'album'}">
+						
+						<!-- Expanded album artwork -->
+						<div v-if="item.type == 'album'" class="album-view-artwork-container" v-bind:class="{placeholder: !item.img}">
+							<img class="artwork" v-bind:src="(item.img) ? item.img : 'common/square-helper.png'" v-bind:alt="item.name" />
+						</div>
+						
+						<!-- Expanded album information -->
+						<p v-if="item.type == 'album'"><strong><span v-if="item.date">{{ releaseDate(item.date) }} • </span><span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</strong></p>
+						<p>{{ item.text }}</p>
+						
+					</div>
+				</div>
+				<div class="menu-content-wrap right">
+					<div class="menu-content" v-if="item.tracks && item.tracks.length > 0">
+						
+						<!-- Compact album artwork -->
+						<div v-if="item.type == 'album'" class="album-view-artwork-container compact-only" v-bind:class="{placeholder: !item.img}">
+							<img class="artwork" v-bind:src="(item.img) ? item.img : 'common/square-helper.png'" v-bind:alt="item.name" />
+						</div>
+						
+						<!-- Compact album information -->
+						<div v-if="item.type == 'album'" class="album-info">
+							<h1>{{ item.name }}</h1>
+							<h2>{{ item.artist }}</h2>
+							<p class="compact-only"><span v-if="item.date">{{ releaseDate(item.date) }} • </span><span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</p>
+						</div>
+						
+						<!-- List tracks -->
+						<menu-item
+							v-for="track in item.tracks"
+							v-bind:label="track.name"
+							v-bind:value="time(track.time)"
+							v-bind:description="(track.artist != item.artist) ? track.artist : ''"
+							v-bind:value-left="track.number"
+							v-bind:icon="'common/symbols-black/volume.svg'"
+							v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
+							v-bind:key="track.id"
+							v-on:click="play(track.id, item.id)"
+						></menu-item>
+						
+					</div>
+					
+					
+					<div class="menu-content wide" v-if="item.albums && item.albums.length > 0">
+						<h2 v-if="item.type == 'album' && item.albums && item.albums.length > 0">More from {{ item.artist }}</h2>
+						<div class="album-collection">
+							<album-item
+						    	v-for="album in item.albums"
+						      	v-bind:album="album"
+						      	v-bind:in-artist="true"
+						      	v-bind:key="album.id"
+						    ></album-item>
+						</div>
+					</div>
+					
+					<div class="menu-content compact-only" v-if="item.text">
+						<p>{{ item.text }}</p>
+						
+					</div>
+					
+					<div class="menu-content"></div>
+				</div>
+			</div>
+			
+		</div>
+		
+	</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script type="text/javascript" charset="utf-8" src="€/music-client.js"></script>
