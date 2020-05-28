@@ -4,11 +4,11 @@
 		<header>
 			<div class="back-button master"></div>
 			<h1>Music</h1>
-			
 			<menu-tabs
 				v-bind:tabs="tabs"
 				v-model="selectedTab"
 			></menu-tabs>
+			<div class="button symbol right compact-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 		</header>
 		
 		<menu-tabs
@@ -18,17 +18,19 @@
 		></menu-tabs>
 		
 		<div class="scroll-area" v-show="selectedTab == 'home'">
+			<header class="aux">
+				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
+			</header>
 			<div class="menu-content">
 				
 			</div>
 		</div>
 		
+			
 		<div class="scroll-area" v-show="selectedTab == 'artists'">
-			<div class="menu-content">
-				<div class="search-container">
-					<input type="search" autocorrect="off" placeholder="All music"/>
-				</div>
-			</div>
+			<header class="aux">
+				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
+			</header>
 			<div class="menu-content wide">
 				<div class="artist-collection">
 					<artist-item
@@ -41,11 +43,9 @@
 		</div>
 		
 		<div class="scroll-area" v-show="selectedTab == 'albums'">
-			<div class="menu-content">
-				<div class="search-container">
-					<input type="search" autocorrect="off" placeholder="All music"/>
-				</div>
-			</div>
+			<header class="aux">
+				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
+			</header>
 			<div class="menu-content wide">
 				<div class="album-collection">
 					<album-item
@@ -63,13 +63,19 @@
 			<div class="back-button master"></div>
 			<h1 v-if="item.type != 'artist'">{{ item.name }}</h1>
 			<h1 v-else>{{ item.artist }}</h1>
+			<div class="button symbol right" v-bind:class="{'compact-only': (item.type == 'artist' && !item.img)}" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 		</header>
 		
 		
 		<div class="scroll-area" v-if="item.type != 'placeholder'">
-			<div class="artist-header" v-if="item.type == 'artist' && item.img" v-bind:style="{backgroundImage: 'url('+item.artistImg+')'}">
+			<div class="artist-header" v-if="item.type == 'artist' && item.img" v-bind:style="{backgroundImage: 'url('+item.img+')'}">
 				<h1>{{ item.artist }}</h1>
 			</div>
+			
+			<header v-if="item.type == 'artist' && !item.img" class="aux normal-only">
+				<div class="button symbol right" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
+			</header>
+			
 			<div class="menu-split">
 				<div class="menu-content-wrap left no-divider normal-only">
 					<div class="menu-content no-padding-right" v-bind:class="{'no-padding-top': item.type == 'album'}">
@@ -80,13 +86,13 @@
 						</div>
 						
 						<!-- Expanded album information -->
-						<p v-if="item.type == 'album'"><strong><span v-if="item.date">{{ releaseDate(item.date) }} • </span><span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</strong></p>
+						<p v-if="item.type == 'album'"><strong><span v-if="item.date">{{ releaseDate(item.date) }} • </span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</strong></p>
 						<p>{{ item.text }}</p>
 						
 					</div>
 				</div>
 				<div class="menu-content-wrap right">
-					<div class="menu-content" v-if="item.tracks && item.tracks.length > 0">
+					<div class="menu-content">
 						
 						<!-- Compact album artwork -->
 						<div v-if="item.type == 'album'" class="album-view-artwork-container compact-only" v-bind:class="{placeholder: !item.img}">
@@ -97,8 +103,9 @@
 						<div v-if="item.type == 'album'" class="album-info">
 							<h1>{{ item.name }}</h1>
 							<h2>{{ item.artist }}</h2>
-							<p class="compact-only"><span v-if="item.date">{{ releaseDate(item.date) }} • </span><span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</p>
+							<p class="compact-only"><span v-if="item.date">{{ releaseDate(item.date) }} • </span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</p>
 						</div>
+	
 						
 						<!-- List tracks -->
 						<menu-item
@@ -107,7 +114,7 @@
 							v-bind:value="time(track.time)"
 							v-bind:description="(track.artist != item.artist) ? track.artist : ''"
 							v-bind:value-left="track.number"
-							v-bind:icon="'common/symbols-black/volume.svg'"
+							icon="common/symbols-black/volume.svg"
 							v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
 							v-bind:key="track.id"
 							v-on:click="play(track.id, item.id)"
@@ -138,9 +145,75 @@
 			</div>
 			
 		</div>
+	</div>
+	
+	<div class="menu-screen" id="music-search" data-menu-title="Search" data-parent-extension="music">
+		<header>
+			<div class="back-button master"></div>
+			<h1>Search</h1>
+		</header>
+		
+		
+		<div class="scroll-area">
+			
+			<div class="menu-content">
+				
+				<form class="search-container" action="javascript:music.search(true);">
+					<input type="search" v-model="search.string" class="music-search-field" placeholder="All music"/>
+					<input type="submit" value="Search">
+				</form>
+				
+				<!-- List previous searches -->
+				<menu-item
+					v-for="pSearch in search.previousSearches"
+					v-bind:label="pSearch"
+					v-bind:key="pSearch"
+					icon="common/symbols-black/search.svg"
+					v-on:click="searchWithString(pSearch)"
+				></menu-item>
+				
+				<!-- List tracks -->
+				<h2 v-if="search.tracks.length > 0">Tracks</h2>
+				<menu-item
+					v-for="track in search.tracks"
+					v-bind:label="track.name"
+					v-bind:value="time(track.time)"
+					v-bind:description="track.artist"
+					v-bind:value-left="track.number"
+					v-bind:key="track.id"
+					v-on:click="play(track.id, 'search')"
+				></menu-item>
+				
+			</div>
+			
+			<div class="menu-content wide" v-if="search.artists.length > 0">
+				<h2>Artists</h2>
+				<div class="artist-collection">
+					<artist-item
+				    	v-for="artist in search.artists"
+				      	v-bind:artist="artist"
+				      	v-bind:key="artist.id"
+				    ></artist-item>
+				</div>
+			</div>
+			
+			<div class="menu-content wide" v-if="search.albums.length > 0">
+				<h2>Albums</h2>
+				<div class="album-collection">
+					<album-item
+				    	v-for="album in search.albums"
+				      	v-bind:album="album"
+				      	v-bind:in-artist="true"
+				      	v-bind:key="album.id"
+				    ></album-item>
+				</div>
+			</div>
+		
+		</div>
 		
 	</div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script type="text/javascript" charset="utf-8" src="€/music-client.js"></script>

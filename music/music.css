@@ -51,6 +51,7 @@
 	background-position: center;
 	transition: opacity 0.3s ease, transform 0.3s ease;
 	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .album-view-artwork-container {
@@ -79,10 +80,9 @@
 .artist-item .artist-img-container:after {
 	position: absolute;
 	content: "";
-	background-color: var(--menu-line);
-	opacity: 0;
-	transition: opacity 0.3s ease, background-color 0.3s ease;
-	z-index: 2;
+	opacity: 1;
+	transition: background-color 0.3s ease;
+	border: 1px solid var(--menu-line);
 	top: 0;
 	bottom: 0;
 	left: 0;
@@ -123,7 +123,7 @@
 
 .no-touch .album-item:hover .artwork-container:after,
 .no-touch .artist-item:hover .artist-img-container:after  {
-	opacity: 1;
+	background-color: var(--menu-line);
 }
 
 .album-item:active .artwork-container,

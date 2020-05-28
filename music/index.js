@@ -23,6 +23,11 @@ var version = require("./package.json").version;
 
 var musicProviders = [];
 
+var defaultSettings = {
+	previousSearches: []
+};
+var settings = JSON.parse(JSON.stringify(defaultSettings));
+
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
@@ -47,6 +52,12 @@ beo.bus.on('general', function(event) {
 });	
 
 beo.bus.on('music', function(event) {
+	
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+		}
+	}
 	
 	
 	if (event.header == "getMusic") {
@@ -76,28 +87,37 @@ beo.bus.on('music', function(event) {
 					beo.sendToUI("music", "musicData", {type: "album", data: album, context: event.content.context});
 				});
 			}
+			if (event.content.type == "search") {
+				previousSearchIndex = settings.previousSearches.indexOf(event.content.context.searchString);
+				if (previousSearchIndex != -1) {
+					settings.previousSearches.splice(previousSearchIndex, 1);
+				}
+				settings.previousSearches.unshift(event.content.context.searchString);
+				if (settings.previousSearches.length > 5) settings.previousSearches.pop();
+				beo.saveSettings("music", settings);
+				getFromMultipleProviders("search", event.content.context).then(data => {
+					beo.sendToUI("music", "musicData", {type: "search", data: {
+						type: "search",
+						tracks: data[0].tracks
+					}, context: event.content.context, previousSearches: settings.previousSearches});
+				});
+			}
 		}
 	}
 	
 	if (event.header == "playMusic") {
 		if (event.content.index != undefined &&
+			event.content.type &&
 			event.content.context && 
 			event.content.context.provider) {
-			beo.extensions[event.content.context.provider].playMusic(event.content.index, event.content.context).then(response => {
+			beo.extensions[event.content.context.provider].playMusic(event.content.index, event.content.type, event.content.context).then(response => {
 				//
 			});
 		}
 	}
 	
-	if (event.header == "find") {
-		if (client && event.content) {
-			client.api.db.find(event.content.filter).then(results => {
-				beo.sendToUI("mpd", "find", results);
-			})
-			.catch(error => {
-				console.error(error);
-			});
-		}
+	if (event.header == "previousSearches") {
+		beo.sendToUI("music", "previousSearches", settings.previousSearches);
 	}
 });
 

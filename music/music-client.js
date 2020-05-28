@@ -73,6 +73,14 @@ var musicVue = new Vue({
 		currentTrackPath: null,
 		artists: [],
 		albums: [],
+		search: {
+			string: "",
+			currentSearch: "",
+			previousSearches: [],
+			tracks: [],
+			albums: [],
+			artists: []
+		},
 		navStack: [
 			{id: 0, type: "placeholder"}
 			/*{
@@ -118,6 +126,10 @@ var musicVue = new Vue({
 		},
 		play: function(index, stackIndex) {
 			music.play(index, stackIndex);
+		},
+		searchWithString: function(string) {
+			music.search(string);
+			data.search.string = string;
 		}
 	}
 });
@@ -150,12 +162,25 @@ $(document).on("music", function(event, data) {
 			}
 		} else {
 			if (dataRequested) {
-				data.content.data.id = stackPosition+1;
-				musicVue.navStack.splice(stackPosition+1, 2, data.content.data, {id: stackPosition+2, type: "placeholder"});
-				beo.showDeepMenu("music-navstack-item-"+(stackPosition+1));
+				if (data.content.type == "search") {
+					musicVue.search.tracks = (data.content.data.tracks) ? data.content.data.tracks : [];
+					musicVue.search.artists = (data.content.data.artists) ? data.content.data.artists : [];
+					musicVue.search.albums = (data.content.data.albums) ? data.content.data.albums : [];
+					musicVue.search.previousSearches = data.content.previousSearches;
+					musicVue.search.currentSearch = data.content.context.searchString;
+				} else {
+					//if (data.content.data.type == "artist") data.content.data.img = "extensions/music/poetsofthefall.jpg";
+					data.content.data.id = stackPosition+1;
+					musicVue.navStack.splice(stackPosition+1, 2, data.content.data, {id: stackPosition+2, type: "placeholder"});
+					beo.showDeepMenu("music-navstack-item-"+(stackPosition+1));
+				}
 				dataRequested = false;
 			}
 		}
+	}
+	
+	if (data.header == "previousSearches") {
+		if (data.content) musicVue.search.previousSearches = data.content;
 	}
 	
 });
@@ -164,7 +189,10 @@ $(document).on("general", function(event, data) {
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "music") {
 			if (data.content.deepMenu != null) {
-				stackPosition = parseInt(data.content.deepMenu.split("-").pop());
+				menu = data.content.deepMenu.split("-").pop();
+				if (menu != "search") {
+					stackPosition = parseInt(menu);
+				}
 			} else {
 				stackPosition = -1;
 			}
@@ -193,12 +221,31 @@ function getContent(type, context, stackPosition) {
 }
 
 function play(index, stackIndex) {
-	beo.sendToProduct("music", "playMusic", {index: index, context: musicVue.navStack[stackIndex].context});
+	if (stackIndex != "search") {
+		beo.sendToProduct("music", "playMusic", {index: index, type: musicVue.navStack[stackIndex].type, context: musicVue.navStack[stackIndex].context});
+	} else {
+		beo.sendToProduct("music", "playMusic", {index: index, type: "search", context: {searchString: musicVue.search.currentSearch, provider: musicVue.search.tracks[index].provider}});
+	}
+}
+
+function search(string) {
+	if (!string) {
+		beo.showDeepMenu("music-search");
+		beo.sendToProduct("music", "previousSearches");
+		setTimeout(function() {
+			document.querySelector(".music-search-field").focus();
+		}, 100);
+	} else {
+		dataRequested = true;
+		if (string == true) string = musicVue.search.string;
+		beo.sendToProduct("music", "getMusic", {type: "search", context: {searchString: string}});
+	}
 }
 
 return {
 	getContent: getContent,
-	play: play
+	play: play,
+	search: search
 };
 
 })();
