@@ -68,6 +68,8 @@
 		
 		
 		<div class="scroll-area" v-if="item.type != 'placeholder'">
+			<h1 class="large-title" v-if="item.type == 'artist'">{{ item.artist }}</h1>
+			
 			<div class="artist-header" v-if="item.type == 'artist' && item.img" v-bind:style="{backgroundImage: 'url('+item.img+')'}">
 				<h1>{{ item.artist }}</h1>
 			</div>
@@ -164,26 +166,42 @@
 				</form>
 				
 				<!-- List previous searches -->
-				<menu-item
-					v-for="pSearch in search.previousSearches"
-					v-bind:label="pSearch"
-					v-bind:key="pSearch"
-					icon="common/symbols-black/search.svg"
-					v-on:click="searchWithString(pSearch)"
-				></menu-item>
+				<div v-if="search.tracks.length == 0 && search.artists.length == 0 && search.albums.length == 0">
+					<menu-item
+						v-for="pSearch in search.previousSearches"
+						v-bind:label="pSearch"
+						v-bind:key="pSearch"
+						icon="common/symbols-black/search.svg"
+						v-on:click="searchWithString(pSearch)"
+					></menu-item>
+				</div>
 				
 				<!-- List tracks -->
-				<h2 v-if="search.tracks.length > 0">Tracks</h2>
-				<menu-item
-					v-for="track in search.tracks"
-					v-bind:label="track.name"
-					v-bind:value="time(track.time)"
-					v-bind:description="track.artist"
-					v-bind:value-left="track.number"
-					v-bind:key="track.id"
-					v-on:click="play(track.id, 'search')"
-				></menu-item>
-				
+				<!--<h2 v-if="search.tracks.length > 0">Tracks</h2>-->
+				<div v-if="!search.showAllTracks">
+					<menu-item
+						v-for="track in search.tracks.slice(0, 5)"
+						v-bind:label="track.name"
+						v-bind:value="time(track.time)"
+						v-bind:description="track.artist"
+						v-bind:value-left="track.number"
+						v-bind:key="track.id"
+						v-on:click="play(track.id, 'search')"
+					></menu-item>
+				</div>
+				<div v-else>
+					<menu-item
+						v-for="track in search.tracks"
+						v-bind:label="track.name"
+						v-bind:value="time(track.time)"
+						v-bind:description="track.artist"
+						v-bind:value-left="track.number"
+						v-bind:key="track.id"
+						v-on:click="play(track.id, 'search')"
+					></menu-item>
+				</div>
+
+				<div class="button pill grey" v-if="search.tracks.length > 5 && !search.showAllTracks" v-on:click="search.showAllTracks = !showAllTracks">Show All Tracks</div>
 			</div>
 			
 			<div class="menu-content wide" v-if="search.artists.length > 0">
@@ -203,7 +221,6 @@
 					<album-item
 				    	v-for="album in search.albums"
 				      	v-bind:album="album"
-				      	v-bind:in-artist="true"
 				      	v-bind:key="album.id"
 				    ></album-item>
 				</div>

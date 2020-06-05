@@ -17,6 +17,11 @@ SOFTWARE.*/
 
 // MUSIC BROWSING FOR BEOCREATE 2
 
+const fs = require("fs");
+const path = require("path");
+const express = require('express');
+const fetch = require("node-fetch");
+
 var debug = beo.debug;
 
 var version = require("./package.json").version;
@@ -24,9 +29,15 @@ var version = require("./package.json").version;
 var musicProviders = [];
 
 var defaultSettings = {
-	previousSearches: []
+	previousSearches: [],
+	artistPicturePath: "/data/library/artists"
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
+
+if (!fs.existsSync(settings.artistPicturePath)) {
+	fs.mkdirSync(settings.artistPicturePath);
+}
+
 
 beo.bus.on('general', function(event) {
 	
@@ -45,6 +56,12 @@ beo.bus.on('general', function(event) {
 				aggregate: true,
 				transportControls: "inherit"
 			});
+			
+			beo.expressServer.use('/music/artists/', (req, res, next) => {
+				if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
+				next();
+			});
+			beo.expressServer.use("/music/artists/", express.static(settings.artistPicturePath));
 				
 		}
 		
@@ -65,7 +82,12 @@ beo.bus.on('music', function(event) {
 			event.content.type &&
 			!event.content.context) {
 			getFromMultipleProviders(event.content.type).then(data => {
-				beo.sendToUI("music", "musicData", {type: event.content.type, data: data[0], context: null});
+				if (event.content.type == "artists") {
+					data = getArtistPictures(data[0], true);
+				} else {
+					data = data[0];
+				}
+				beo.sendToUI("music", "musicData", {type: event.content.type, data: data, context: null});
 			});
 		} else {
 			if (event.content.type == "artist") {
@@ -76,6 +98,7 @@ beo.bus.on('music', function(event) {
 						albums: data[0],
 						context: event.content.context
 					}
+					artist = getArtistPictures([artist])[0];
 					beo.sendToUI("music", "musicData", {type: "artist", data: artist, context: event.content.context});
 				});
 			}
@@ -98,7 +121,9 @@ beo.bus.on('music', function(event) {
 				getFromMultipleProviders("search", event.content.context).then(data => {
 					beo.sendToUI("music", "musicData", {type: "search", data: {
 						type: "search",
-						tracks: data[0].tracks
+						tracks: data[0].tracks,
+						albums: data[0].albums,
+						artists: getArtistPictures(data[0].artists, true)
 					}, context: event.content.context, previousSearches: settings.previousSearches});
 				});
 			}
@@ -137,6 +162,128 @@ function registerProvider(provider) {
 		musicProviders.push(provider);
 		if (debug) console.log("'"+provider+"' was registered as a music provider.");
 	}
+}
+
+var artistDB = null;
+var artistPictures = [];
+var artistPicturesLC = [];
+var extList = [".jpg", ".jpeg", ".png"];
+
+function getArtistPictures(artists) {
+	if (!artistDB) {
+		if (fs.existsSync(settings.artistPicturePath+"/database.json")) {
+			try {
+				artistDB = require(settings.artistPicturePath+"/database.json");
+			} catch (error) {
+				console.error("Error reading artist database:", error);
+				artistDB = {};
+			}
+		} else {
+			artistDB = {};
+		}
+	}
+	
+	artistPictures = fs.readdirSync(settings.artistPicturePath);
+	artistPicturesLC = [];
+	for (f in artistPictures) {
+		artistPicturesLC.push(artistPictures[f].toLowerCase());
+	}
+	
+	artistList = [];
+	for (a in artists) {
+		if (!artistDB[artists[a].artist]) {
+			artistDB[artists[a].artist] = {internetLookup: false, img: null, thumbnail: null, mbid: null};
+			saveArtistDB();
+		}
+		artistList.push(artists[a].artist);
+		artist = artists[a].artist.toLowerCase();
+		
+		// Get thumbnail.
+		for (e in extList) {
+			index = artistPicturesLC.indexOf(artist+"-thumb"+extList[e]);
+			if (index != -1) {
+				artists[a].thumbnail = "/music/artists/"+encodeURIComponent(artistPictures[index]).replace(/[!'()*]/g, escape);
+				artistDB[artists[a].artist].thumbnail = artistPictures[index];
+				break;
+			}
+		}
+		if (!artists[a].thumbnail) artistDB[artists[a].artist].thumbnail = null;
+		
+		// Get cover picture.
+		for (e in extList) {
+			index = artistPicturesLC.indexOf(artist+extList[e]);
+			if (index != -1) {
+				artists[a].img = "/music/artists/"+encodeURIComponent(artistPictures[index]).replace(/[!'()*]/g, escape);
+				artistDB[artists[a].artist].img = artistPictures[index];
+				if (!artists[a].thumbnail) artists[a].thumbnail = artists[a].img;
+				break;
+			}
+		}
+		if (!artists[a].img) artistDB[artists[a].artist].img = null;
+	}
+	findMissingArtistPictures(artistList);
+	return artists;
+}
+
+
+async function findMissingArtistPictures(list = null) {
+	if (!list) {
+		list = [];
+		for (a in artistDB) {
+			list.push(a);
+		}
+	}
+	
+	for (a in list) {
+		if (artistDB[list[a]] && !artistDB[list[a]].internetLookup) {
+			hifiberryAPICall = await fetch("http://musicdb.hifiberry.com/artistcover/"+encodeURIComponent(list[a]));
+			if (hifiberryAPICall.status == 200) {
+				json = await hifiberryAPICall.json();
+				if (json.mbid) {
+					artistDB[list[a]].mbid = json.mbid;
+					if (!artistDB[list[a]].img || !artistDB[list[a]].thumbnail) {
+						fanartAPICall = await fetch("http://webservice.fanart.tv/v3/music/"+json.mbid+"?api_key=084f2487ed559999e85996db790f864b");
+						if (fanartAPICall.status == 200) {
+							try {
+								fanartJSON = await fanartAPICall.json();
+								newPictures = {artist: list[a]};
+								if (fanartJSON.artistthumb && !artistDB[list[a]].thumbnail) {
+									if (debug > 1) console.log("Downloading thumbnail for artist '"+list[a]+"'...");
+									await beo.download(fanartJSON.artistthumb[0].url, settings.artistPicturePath, list[a].toLowerCase()+"-thumb.jpg");
+									artistDB[list[a]].thumbnail = list[a].toLowerCase()+"-thumb.jpg";
+									newPictures.thumbnail = "/music/artists/"+encodeURIComponent(artistDB[list[a]].thumbnail).replace(/[!'()*]/g, escape);
+								}
+								if (fanartJSON.artistbackground && !artistDB[list[a]].img) {
+									if (debug > 1) console.log("Downloading image for artist '"+list[a]+"'...");
+									await beo.download(fanartJSON.artistbackground[0].url, settings.artistPicturePath, list[a].toLowerCase()+".jpg");
+									artistDB[list[a]].img = list[a].toLowerCase()+".jpg";
+									newPictures.img = "/music/artists/"+encodeURIComponent(artistDB[list[a]].img).replace(/[!'()*]/g, escape);
+								}
+								if (newPictures.thumbnail || newPictures.img) beo.sendToUI("music", "artistPictures", newPictures);
+							} catch (error) {
+								console.error(error);
+							}
+						}
+					}
+				}
+			}
+			artistDB[list[a]].internetLookup = true;
+			saveArtistDB();
+		}
+	}
+	
+}
+
+var artistDBSaveTimeout;
+function saveArtistDB() {
+	clearTimeout(artistDBSaveTimeout);
+	artistDBSaveTimeout = setTimeout(function() {
+		fs.writeFileSync(settings.artistPicturePath+"/database.json", JSON.stringify(artistDB));
+	}, 5000);
+}
+
+function escapeString(string) {
+	return string.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"').replace(/\\/g, '\\');
 }
 	
 module.exports = {

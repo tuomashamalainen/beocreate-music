@@ -21,11 +21,11 @@ Vue.component('ArtistItem', {
 	template: '<div class="artist-item" v-on:click="getArtist({artist: artist.artist}, stackPosition)">\
 				<div class="artist-img-container" v-bind:title="artist.artist">\
 					<img class="square-helper" src="common/square-helper.png">\
-					<div class="artist-img" v-if="artist.img" v-bind:style="{backgroundImage: \'url(\'+artist.img+\')\'}"></div>\
+					<div class="artist-img" v-if="artist.img || artist.thumbnail" v-bind:style="{backgroundImage: \'url(\'+((artist.thumbnail) ? artist.thumbnail : artist.img)+\')\'}"></div>\
 					<div class="artist-placeholder" v-else></div>\
 				</div>\
 				<div class="artist-name">{{ artist.artist }}</div>\
-				<div class="artist-albums">{{ artist.albumLength }} album{{(artist.albumLength != 1) ? "s" : ""}}</div>\
+				<div class="artist-albums" v-if="artist.albumLength">{{ artist.albumLength }} album{{(artist.albumLength != 1) ? "s" : ""}}</div>\
 			</div>',
 	methods: {
 		getArtist: function(context, stackPosition) {
@@ -78,6 +78,7 @@ var musicVue = new Vue({
 			currentSearch: "",
 			previousSearches: [],
 			tracks: [],
+			showAllTracks: false,
 			albums: [],
 			artists: []
 		},
@@ -129,7 +130,7 @@ var musicVue = new Vue({
 		},
 		searchWithString: function(string) {
 			music.search(string);
-			data.search.string = string;
+			musicVue.search.string = string;
 		}
 	}
 });
@@ -181,6 +182,36 @@ $(document).on("music", function(event, data) {
 	
 	if (data.header == "previousSearches") {
 		if (data.content) musicVue.search.previousSearches = data.content;
+	}
+	
+	if (data.header == "artistPictures" && data.content.artist) {
+		// Update artist images when they arrive asynchronously.
+		for (a in musicVue.artists) {
+			if (musicVue.artists[a].artist == data.content.artist) {
+				musicVue.$set(musicVue.artists[a], 'img', data.content.img);
+				musicVue.$set(musicVue.artists[a], 'thumbnail', data.content.thumbnail);
+			}
+		}
+		for (a in musicVue.search.artists) {
+			if (musicVue.search.artists[a].artist == data.content.artist) {
+				musicVue.search.artists[a].img = data.content.img;
+				musicVue.search.artists[a].thumbnail = data.content.thumbnail;
+			}
+		}
+		for (s in musicVue.navStack) {
+			if (musicVue.navStack[s].type == "artist") {
+				musicVue.navStack[s].img = data.content.img;
+				musicVue.navStack[s].thumbnail = data.content.thumbnail;
+			}
+			if (musicVue.navStack[s].artists) {
+				for (a in musicVue.navStack[s].artists) {
+					if (musicVue.navStack[s].artists[a].artist == data.content.artist) {
+						musicVue.navStack[s].artists[a].img = data.content.img;
+						musicVue.navStack[s].artists[a].thumbnail = data.content.thumbnail;
+					}
+				}
+			}
+		}
 	}
 	
 });
@@ -236,7 +267,9 @@ function search(string) {
 			document.querySelector(".music-search-field").focus();
 		}, 100);
 	} else {
+		document.querySelector(".music-search-field").blur();
 		dataRequested = true;
+		musicVue.search.showAllTracks = false;
 		if (string == true) string = musicVue.search.string;
 		beo.sendToProduct("music", "getMusic", {type: "search", context: {searchString: string}});
 	}
