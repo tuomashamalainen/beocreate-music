@@ -7,7 +7,7 @@ Vue.component('AlbumItem', {
 					<div class="artwork-placeholder" v-else></div>\
 				</div>\
 				<div class="album-name">{{ album.name }}</div>\
-				<div class="album-artist">{{ !inArtist ? album.artist : (album.date ? album.date.substring(0, 4) : "") }}</div>\
+				<div class="album-artist">{{ !inArtist ? album.artist : album.date }}</div>\
 			</div>',
 	methods: {
 		getAlbum: function(context, stackPosition) {
