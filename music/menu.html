@@ -31,6 +31,9 @@
 			<header class="aux">
 				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 			</header>
+			<div v-if="updating" class="menu-content">
+				<p class="loading">Updating library...</p>
+			</div>
 			<div class="menu-content wide">
 				<div class="artist-collection">
 					<artist-item

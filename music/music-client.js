@@ -70,6 +70,7 @@ var musicVue = new Vue({
 			{name: "albums", title: "Albums"},
 			{name: "songs", title: "Songs", disabled: true}
 		],
+		updating: false,
 		currentTrackPath: null,
 		artists: [],
 		albums: [],
@@ -194,25 +195,28 @@ $(document).on("music", function(event, data) {
 		}
 		for (a in musicVue.search.artists) {
 			if (musicVue.search.artists[a].artist == data.content.artist) {
-				musicVue.search.artists[a].img = data.content.img;
-				musicVue.search.artists[a].thumbnail = data.content.thumbnail;
+				musicVue.$set(musicVue.search.artists[a], 'img', data.content.img);
+				musicVue.$set(musicVue.search.artists[a], 'thumbnail', data.content.thumbnail);
 			}
 		}
 		for (s in musicVue.navStack) {
-			if (musicVue.navStack[s].type == "artist") {
-				musicVue.navStack[s].img = data.content.img;
-				musicVue.navStack[s].thumbnail = data.content.thumbnail;
+			if (musicVue.navStack[s].type == "artist" && musicVue.navStack[s].artist == data.content.artist) {
+				musicVue.$set(musicVue.navStack[s], 'img', data.content.img);
+				musicVue.$set(musicVue.navStack[s], 'thumbnail', data.content.thumbnail);
 			}
 			if (musicVue.navStack[s].artists) {
 				for (a in musicVue.navStack[s].artists) {
 					if (musicVue.navStack[s].artists[a].artist == data.content.artist) {
-						musicVue.navStack[s].artists[a].img = data.content.img;
-						musicVue.navStack[s].artists[a].thumbnail = data.content.thumbnail;
+						musicVue.$set(musicVue.navStack[s].artists[a], 'img', data.content.img);
+						musicVue.$set(musicVue.navStack[s].artists[a], 'thumbnail', data.content.thumbnail);
 					}
 				}
 			}
 		}
 	}
+	
+	if (data.header == "updatingLibrary") musicVue.updating = true;
+	if (data.header == "libraryUpdated") musicVue.updating = false;
 	
 });
 
