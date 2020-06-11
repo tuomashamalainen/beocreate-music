@@ -241,10 +241,11 @@ async function findMissingArtistPictures(list = null) {
 	}
 	artistDownloadQueue = artistDownloadQueue.concat(list);
 	
-	if (artistDownloadQueue.length) setLibraryUpdateStatus("artistPictureDL", true);
+	
 	
 	for (a in artistDownloadQueue) {
 		if (artistDB[artistDownloadQueue[a]] && !artistDB[artistDownloadQueue[a]].internetLookup) {
+			setLibraryUpdateStatus("artistPictureDL", true);
 			hifiberryAPICall = await fetch("http://musicdb.hifiberry.com/artistcover/"+encodeURIComponent(artistDownloadQueue[a]));
 			if (hifiberryAPICall.status == 200) {
 				json = await hifiberryAPICall.json();
