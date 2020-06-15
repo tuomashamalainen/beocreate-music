@@ -47,12 +47,17 @@
 		
 		<div class="scroll-area" v-show="selectedTab == 'albums'">
 			<header class="aux">
+				<segmented-control
+					class="minimal"
+					v-bind:buttons="albumSortOptions"
+					v-model="albumSort"
+				>Sort by:</segmented-control>
 				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 			</header>
 			<div class="menu-content wide">
 				<div class="album-collection">
 					<album-item
-				    	v-for="album in albums"
+				    	v-for="album in sortedAlbums"
 				      	v-bind:album="album"
 				      	v-bind:key="album.id"
 				    ></album-item>

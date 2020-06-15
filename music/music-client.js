@@ -60,6 +60,14 @@ Vue.component('MenuTabs', {
 				</div>'
 });
 
+Vue.component('SegmentedControl', {
+	props: ["buttons", "value"],
+	template: '<div class="segmented-control">\
+					<span><slot></slot></span>\
+					<div v-for="button in buttons" v-bind:class="{selected: value == button.name, disabled: button.disabled}" v-on:click="$emit(\'input\', button.name)" v-html="button.title"></div>\
+				</div>'
+});
+
 var musicVue = new Vue({
 	el: "#music-app",
 	data: {
@@ -74,6 +82,11 @@ var musicVue = new Vue({
 		currentTrackPath: null,
 		artists: [],
 		albums: [],
+		albumSortOptions: [
+			{name: "artistYear", title: "Artist & Year"},
+			{name: "name", title: "Name"}
+		],
+		albumSort: "artistYear",
 		search: {
 			string: "",
 			currentSearch: "",
@@ -108,6 +121,22 @@ var musicVue = new Vue({
 				]
 			}*/
 		]
+	},
+	computed: {
+		sortedAlbums: function() {
+			if (this.albumSort == "name") {
+				sortAlbums = [].concat(this.albums);
+				return sortAlbums.sort(function(a, b) {
+					if (a.name >= b.name) {
+						return 1
+					} else {
+						return -1;
+					}
+				});
+			} else {
+				return this.albums;
+			}
+		}
 	},
 	methods: {
 		time: function(seconds) {
