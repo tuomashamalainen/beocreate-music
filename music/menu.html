@@ -122,7 +122,7 @@
 							v-for="track in item.tracks"
 							v-bind:label="track.name"
 							v-bind:value="time(track.time)"
-							v-bind:description="(track.artist != item.artist) ? track.artist : ''"
+							v-bind:description="(track.artist.toLowerCase() != item.artist.toLowerCase()) ? track.artist : ''"
 							v-bind:value-left="track.number"
 							icon="common/symbols-black/volume.svg"
 							v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
