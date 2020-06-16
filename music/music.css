@@ -262,3 +262,61 @@
 	}
 	
 }
+
+@media only screen and (min-width: 2100px) {
+	
+	.album-collection,
+	.artist-collection {
+		grid-template-columns: repeat(6, 1fr);
+		grid-column-gap: 2%;
+	}
+	
+}
+
+@media only screen and (min-width: 2500px) {
+	
+	.album-collection,
+	.artist-collection {
+		grid-template-columns: repeat(7, 1fr);
+		grid-column-gap: 1.5%;
+	}
+	
+}
+
+@media only screen and (min-width: 2800px) {
+	
+	.album-collection,
+	.artist-collection {
+		grid-template-columns: repeat(8, 1fr);
+		grid-column-gap: 1%;
+	}
+	
+}
+
+@media only screen and (min-width: 3100px) {
+	
+	.album-collection,
+	.artist-collection {
+		grid-template-columns: repeat(9, 1fr);
+		
+	}
+	
+}
+
+@media only screen and (min-width: 3500px) {
+	
+	.album-collection,
+	.artist-collection {
+		grid-template-columns: repeat(10, 1fr);
+	}
+	
+}
+
+@media only screen and (min-width: 3800px) {
+	
+	.album-collection,
+	.artist-collection {
+		grid-template-columns: repeat(11, 1fr);
+	}
+	
+}
