@@ -17,7 +17,7 @@
 			v-model="selectedTab"
 		></menu-tabs>
 		
-		<div class="scroll-area" v-show="selectedTab == 'home'">
+		<div class="scroll-area aux-header" v-show="selectedTab == 'home'">
 			<header class="aux">
 				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 			</header>
@@ -27,7 +27,7 @@
 		</div>
 		
 			
-		<div class="scroll-area" v-show="selectedTab == 'artists'">
+		<div class="scroll-area aux-header" v-show="selectedTab == 'artists'">
 			<header class="aux">
 				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 			</header>
@@ -45,7 +45,7 @@
 			</div>
 		</div>
 		
-		<div class="scroll-area" v-show="selectedTab == 'albums'">
+		<div class="scroll-area aux-header" v-show="selectedTab == 'albums'">
 			<header class="aux">
 				<segmented-control
 					class="minimal"

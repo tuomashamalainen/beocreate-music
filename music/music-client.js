@@ -84,7 +84,8 @@ var musicVue = new Vue({
 		albums: [],
 		albumSortOptions: [
 			{name: "artistYear", title: "Artist & Year"},
-			{name: "name", title: "Name"}
+			{name: "name", title: "Name"},
+			{name: "year", title: "Year"}
 		],
 		albumSort: "artistYear",
 		search: {
@@ -131,6 +132,19 @@ var musicVue = new Vue({
 						return 1
 					} else {
 						return -1;
+					}
+				});
+			} else if (this.albumSort == "year") {
+				sortAlbums = [].concat(this.albums);
+				return sortAlbums.sort(function(a, b) {
+					if (a.date && b.date) {
+						if (a.date >= b.date) {
+							return 1
+						} else {
+							return -1;
+						}
+					} else {
+						return 0;
 					}
 				});
 			} else {

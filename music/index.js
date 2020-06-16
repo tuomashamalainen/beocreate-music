@@ -204,7 +204,7 @@ function getArtistPictures(artists) {
 			saveArtistDB();
 		}
 		artistList.push(artists[a].artist);
-		artist = artists[a].artist.toLowerCase();
+		artist = artists[a].artist.toLowerCase().replace(/\//g, "-");;
 		
 		// Get thumbnail.
 		for (e in extList) {
@@ -261,7 +261,8 @@ async function findMissingArtistPictures(list = null) {
 								if (fanartJSON.artistthumb && !artistDB[artistDownloadQueue[a]].thumbnail) {
 									if (debug > 1) console.log("Downloading thumbnail for artist '"+artistDownloadQueue[a]+"'...");
 									// Download picture.
-									await beo.download(fanartJSON.artistthumb[0].url, settings.artistPicturePath, artistDownloadQueue[a].toLowerCase()+"-thumb.jpg");
+									filename = artistDownloadQueue[a].toLowerCase().replace(/\//g, "-");
+									await beo.download(fanartJSON.artistthumb[0].url, settings.artistPicturePath, filename+"-thumb.jpg");
 									// Resize picture.
 									try {
 										await exec("convert \""+settings.artistPicturePath+"/"+artistDownloadQueue[a].toLowerCase()+"-thumb.jpg\" -resize 400x400\\> \""+settings.artistPicturePath+"/"+artistDownloadQueue[a].toLowerCase()+"-thumb.jpg\"");
@@ -269,7 +270,7 @@ async function findMissingArtistPictures(list = null) {
 										console.log("Error resizing image:", error);
 									}
 									
-									artistDB[artistDownloadQueue[a]].thumbnail = artistDownloadQueue[a].toLowerCase()+"-thumb.jpg";
+									artistDB[artistDownloadQueue[a]].thumbnail = filename+"-thumb.jpg";
 									newPictures.thumbnail = "/music/artists/"+encodeURIComponent(artistDB[artistDownloadQueue[a]].thumbnail).replace(/[!'()*]/g, escape);
 								}
 								if (fanartJSON.artistbackground && !artistDB[artistDownloadQueue[a]].img) {
@@ -303,9 +304,6 @@ function saveArtistDB() {
 	}, 5000);
 }
 
-function escapeString(string) {
-	return string.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"').replace(/\\/g, '\\');
-}
 
 var libraryUpdateJobs = [];
 var updatingLibrary = false;
