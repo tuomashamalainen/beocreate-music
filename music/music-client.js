@@ -3,7 +3,7 @@ Vue.component('AlbumItem', {
 	template: '<div class="album-item" v-on:click="getAlbum({artist: album.artist, album: album.name, provider: album.provider}, stackPosition)">\
 				<div class="artwork-container" v-bind:title="album.name">\
 					<img class="square-helper" src="common/square-helper.png">\
-					<div class="artwork" v-if="album.img" v-bind:style="{backgroundImage: \'url(\'+album.img+\')\'}"></div>\
+					<div class="artwork" v-if="album.thumbnail || album.img" v-bind:style="{backgroundImage: \'url(\'+((album.thumbnail) ? album.thumbnail : album.img)+\')\'}"></div>\
 					<div class="artwork-placeholder" v-else></div>\
 				</div>\
 				<div class="album-name">{{ album.name }}</div>\
@@ -71,9 +71,9 @@ Vue.component('SegmentedControl', {
 var musicVue = new Vue({
 	el: "#music-app",
 	data: {
-		selectedTab: "home",
+		selectedTab: "artists",
 		tabs: [
-			{name: "home", title: "Home"},
+			{name: "home", title: "Home", disabled: true},
 			{name: "artists", title: "Artists"},
 			{name: "albums", title: "Albums"},
 			{name: "songs", title: "Songs", disabled: true}

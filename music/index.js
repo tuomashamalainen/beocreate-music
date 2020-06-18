@@ -323,10 +323,18 @@ function setLibraryUpdateStatus(job, status) {
 		}
 	}
 }
+
+function returnMusic(provider, type, musicData, context) {
+	if (type == "artists") {
+			musicData = getArtistPictures(musicData, true);
+		}
+	beo.sendToUI("music", "musicData", {type: type, data: musicData, context: context});
+}
 	
 module.exports = {
 	version: version,
 	registerProvider: registerProvider,
-	setLibraryUpdateStatus: setLibraryUpdateStatus
+	setLibraryUpdateStatus: setLibraryUpdateStatus,
+	returnMusic: returnMusic
 };
 
