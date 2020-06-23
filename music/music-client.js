@@ -273,6 +273,9 @@ $(document).on("general", function(event, data) {
 				}
 			} else {
 				stackPosition = -1;
+				if (musicVue.artists.length == 0) {
+					beo.sendToProduct("music", "getMusic", {type: "artists"});
+				}
 			}
 		}
 	}

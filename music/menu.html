@@ -28,7 +28,7 @@
 		
 			
 		<div class="scroll-area aux-header" v-show="selectedTab == 'artists'">
-			<header class="aux">
+			<header class="aux normal-only">
 				<div class="button symbol right normal-only" style="-webkit-mask-image: url(/common/symbols-black/search.svg); mask-image: url(/common/symbols-black/search.svg);" title="Search" onclick="music.search();"></div>
 			</header>
 			<div v-if="updating" class="menu-content">
@@ -115,24 +115,38 @@
 						<!-- Compact album information -->
 						<div v-if="item.type == 'album'" class="album-info">
 							<h1>{{ item.name }}</h1>
-							<h2>{{ item.artist }}</h2>
+							<h3>{{ item.artist }}</h3>
 							<p class="compact-only"><span v-if="item.date">{{ releaseDate(item.date) }} • </span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</p>
 						</div>
-	
 						
 						<!-- List tracks -->
-						<menu-item
-							v-for="track in item.tracks"
-							v-bind:label="track.name"
-							v-bind:value="time(track.time)"
-							v-bind:description="(track.artist.toLowerCase() != item.artist.toLowerCase()) ? track.artist : ''"
-							v-bind:value-left="track.number"
-							icon="common/symbols-black/volume.svg"
-							v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
-							v-bind:key="track.id"
-							v-on:click="play(track.id, item.id)"
-						></menu-item>
-						
+						<div v-for="(disc, index) in item.discs">
+							<h2 v-if="item.discs.length > 1">Disc {{ index+1 }}</h2>
+							<menu-item
+								v-for="track in disc"
+								v-bind:label="track.name"
+								v-bind:value="time(track.time)"
+								v-bind:description="(track.artist.toLowerCase() != item.artist.toLowerCase()) ? track.artist : ''"
+								v-bind:value-left="track.number"
+								icon="common/symbols-black/volume.svg"
+								v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
+								v-bind:key="track.id"
+								v-on:click="play(track.id, item.id)"
+							></menu-item>
+						</div>
+						<div v-if="!item.discs || item.discs.length == 0">
+							<menu-item
+								v-for="track in item.tracks"
+								v-bind:label="track.name"
+								v-bind:value="time(track.time)"
+								v-bind:description="(track.artist.toLowerCase() != item.artist.toLowerCase()) ? track.artist : ''"
+								v-bind:value-left="track.number"
+								icon="common/symbols-black/volume.svg"
+								v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
+								v-bind:key="track.id"
+								v-on:click="play(track.id, item.id)"
+							></menu-item>
+						</div>
 					</div>
 					
 					
