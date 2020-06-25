@@ -229,7 +229,10 @@ function getArtistPictures(artists) {
 		}
 		if (!artists[a].img) artistDB[artists[a].artist].img = null;
 	}
-	findMissingArtistPictures(artistList);
+	if (beo.extensions.privacy &&
+		beo.extensions.getPrivacySetting) {
+		if (beo.extensions.getPrivacySetting("externalMetadata")) findMissingArtistPictures(artistList);
+	}
 	return artists;
 }
 
