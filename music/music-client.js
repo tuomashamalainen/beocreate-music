@@ -128,7 +128,19 @@ var musicVue = new Vue({
 			if (this.albumSort == "name") {
 				sortAlbums = [].concat(this.albums);
 				return sortAlbums.sort(function(a, b) {
-					if (a.name >= b.name) {
+					a = a.name.toLowerCase();
+					b = b.name.toLowerCase();
+					if (a.startsWith("the ")) {
+						a = a.substring(4);
+					} else if (a.startsWith("a ")) {
+						a = a.substring(2);
+					}
+					if (b.startsWith("the ")) {
+						b = b.substring(4);
+					} else if (b.startsWith("a ")) {
+						b = b.substring(2);
+					}
+					if (a >= b) {
 						return 1
 					} else {
 						return -1;
@@ -179,6 +191,16 @@ var musicVue = new Vue({
 	}
 });
 
+if (localStorage.beocreateAlbumSort) {
+	switch (localStorage.beocreateAlbumSort) {
+		case "artistYear":
+		case "name":
+		case "year":
+			musicVue.albumSort = localStorage.beocreateAlbumSort;
+			break;
+	}
+}
+
 
 var music = (function() {
 
@@ -194,6 +216,10 @@ musicVue.$watch('selectedTab', function(tab) {
 			break;
 	}
 	if (getData) beo.sendToProduct("music", "getMusic", {type: tab});
+});
+
+musicVue.$watch('albumSort', function(sort) {
+	localStorage.beocreateAlbumSort = sort;
 });
 
 $(document).on("music", function(event, data) {
