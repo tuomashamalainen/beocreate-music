@@ -121,6 +121,25 @@
 	top: 0;
 }
 
+.artist-item .artist-placeholder:after {
+	content: "";
+	display: block;
+	-webkit-mask-image: url(symbols-black/artist.svg);
+	mask-image: url(symbols-black/artist.svg);
+	-webkit-mask-size: 50%;
+	mask-size: 50%;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	background-color: currentColor;
+	opacity: 0.05;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+}
+
 .no-touch .album-item:hover .artwork-container:after,
 .no-touch .artist-item:hover .artist-img-container:after  {
 	background-color: var(--menu-line);
