@@ -256,16 +256,16 @@ async function findMissingArtistPictures(list = null) {
 				changesMade = true;
 				hifiberryAPICall = await fetch("http://musicdb.hifiberry.com/artistcover/"+encodeURIComponent(artistDownloadQueue[a]));
 				if (hifiberryAPICall.status == 200) {
-					json = await hifiberryAPICall.json();
-					if (json.mbid) {
-						artistDB[artistDownloadQueue[a]].mbid = json.mbid;
+					hifiberryJSON = await hifiberryAPICall.json();
+					if (hifiberryJSON.mbid) {
+						artistDB[artistDownloadQueue[a]].mbid = hifiberryJSON.mbid;
 						if (!artistDB[artistDownloadQueue[a]].img || !artistDB[artistDownloadQueue[a]].thumbnail) {
 							newPictures = {artist: artistDownloadQueue[a]};
-							if (json.url && !artistDB[artistDownloadQueue[a]].thumbnail) {
+							if (hifiberryJSON.url && !artistDB[artistDownloadQueue[a]].thumbnail) {
 								if (debug > 1) console.log("Downloading thumbnail for artist '"+artistDownloadQueue[a]+"'...");
 								// Download picture.
 								filename = artistDownloadQueue[a].toLowerCase().replace(/\//g, "-");
-								await beo.download(json.url, settings.artistPicturePath, filename+"-thumb.jpg");
+								await beo.download(hifiberryJSON.url, settings.artistPicturePath, filename+"-thumb.jpg");
 								// Resize picture.
 								try {
 									await exec("convert \""+settings.artistPicturePath+"/"+artistDownloadQueue[a].toLowerCase()+"-thumb.jpg\" -resize 400x400\\> \""+settings.artistPicturePath+"/"+artistDownloadQueue[a].toLowerCase()+"-thumb.jpg\"");
@@ -276,7 +276,7 @@ async function findMissingArtistPictures(list = null) {
 								artistDB[artistDownloadQueue[a]].thumbnail = filename+"-thumb.jpg";
 								newPictures.thumbnail = "/music/artists/"+encodeURIComponent(artistDB[artistDownloadQueue[a]].thumbnail).replace(/[!'()*]/g, escape);
 							}
-							fanartAPICall = await fetch("http://webservice.fanart.tv/v3/music/"+json.mbid+"?api_key=084f2487ed559999e85996db790f864b");
+							fanartAPICall = await fetch("http://webservice.fanart.tv/v3/music/"+hifiberryJSON.mbid+"?api_key=084f2487ed559999e85996db790f864b");
 							if (fanartAPICall.status == 200) {
 								try {
 									fanartJSON = await fanartAPICall.json();
