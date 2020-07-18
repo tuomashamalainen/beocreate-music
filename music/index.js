@@ -354,7 +354,7 @@ function processUpload(path, context) {
 			beo.extensions[context.provider] &&
 			beo.extensions[context.provider].setAlbumCover) {
 			beo.extensions[context.provider].setAlbumCover(path, context).then(newCover => {
-				if (newCover.errors == null) {
+				if (newCover.error == null) {
 					beo.sendToUI("music", "albumPictures", {pictures: newCover, context: context});
 				}
 			});
