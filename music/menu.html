@@ -94,7 +94,7 @@
 					<div class="menu-content no-padding-right" v-bind:class="{'no-padding-top': item.type == 'album'}">
 						
 						<!-- Expanded album artwork -->
-						<div v-if="item.type == 'album'" class="album-view-artwork-container" v-bind:class="{placeholder: !item.img}">
+						<div v-if="item.type == 'album'" class="album-view-artwork-container" v-bind:class="{placeholder: !item.img}" v-cloak @drop.prevent="uploadPicture($event, item)" @dragover.prevent>
 							<img class="artwork" v-bind:src="(item.img) ? item.img : 'common/square-helper.png'" v-bind:alt="item.name" />
 						</div>
 						

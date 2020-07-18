@@ -345,9 +345,26 @@ function returnMusic(provider, type, musicData, context) {
 		}
 	beo.sendToUI("music", "musicData", {type: type, data: musicData, context: context});
 }
+
+function processUpload(path, context) {
+	if (context.type == "artist") {
+		
+	} else if (context.type == "album") {
+		if (context.provider &&
+			beo.extensions[context.provider] &&
+			beo.extensions[context.provider].setAlbumCover) {
+			beo.extensions[context.provider].setAlbumCover(path, context).then(newCover => {
+				if (newCover.errors == null) {
+					beo.sendToUI("music", "albumPictures", {pictures: newCover, context: context});
+				}
+			});
+		}
+	}
+}
 	
 module.exports = {
 	version: version,
+	processUpload: processUpload,
 	registerProvider: registerProvider,
 	setLibraryUpdateStatus: setLibraryUpdateStatus,
 	returnMusic: returnMusic

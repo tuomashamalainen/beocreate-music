@@ -187,7 +187,25 @@ var musicVue = new Vue({
 		searchWithString: function(string) {
 			music.search(string);
 			musicVue.search.string = string;
-		}
+		},
+		uploadPicture: function(event, target) {
+			if (event.dataTransfer && event.dataTransfer.files) {
+				if (target.provider) {
+					context = {type: "artist", fileType: event.dataTransfer.files[0].type};
+					if (target.provider) context.provider = target.provider;
+					if (target.artist) context.artist = target.artist;
+					if (target.name) {
+						context.album = target.name;
+						context.type = "album";
+					}
+					beo.uploadFile(
+						{types: ["image/jpeg", "image/png"], customData: context},
+						"music",
+						event.dataTransfer.files[0]
+					);
+				}
+			}
+	    }
 	}
 });
 
@@ -281,6 +299,46 @@ $(document).on("music", function(event, data) {
 					}
 				}
 			}
+		}
+	}
+	
+	if (data.header == "albumPictures" && data.content.context) {
+		// Update album images when they arrive asynchronously.
+		for (a in musicVue.albums) {
+			if (musicVue.albums[a].name == data.content.context.album &&
+				musicVue.albums[a].artist == data.content.context.artist) {
+				musicVue.$set(musicVue.albums[a], 'img', data.content.pictures.img);
+				musicVue.$set(musicVue.albums[a], 'thumbnail', data.content.pictures.thumbnail);
+				musicVue.$set(musicVue.albums[a], 'tinyThumbnail', data.content.pictures.tinyThumbnail);
+			}
+		}
+		for (a in musicVue.search.albums) {
+			if (musicVue.search.albums[a].name == data.content.context.album &&
+				musicVue.search.albums[a].artist == data.content.context.artist) {
+				musicVue.$set(musicVue.search.albums[a], 'img', data.content.pictures.img);
+				musicVue.$set(musicVue.search.albums[a], 'thumbnail', data.content.pictures.thumbnail);
+				musicVue.$set(musicVue.search.albums[a], 'tinyThumbnail', data.content.pictures.tinyThumbnail);
+			}
+		}
+		for (s in musicVue.navStack) {
+			if (musicVue.navStack[s].type == "album" && 
+				musicVue.navStack[s].artist == data.content.context.artist && 
+				musicVue.navStack[s].name == data.content.context.album) {
+				musicVue.$set(musicVue.navStack[s], 'img', data.content.pictures.img);
+				musicVue.$set(musicVue.navStack[s], 'thumbnail', data.content.pictures.thumbnail);
+				musicVue.$set(musicVue.navStack[s], 'tinyThumbnail', data.content.pictures.tinyThumbnail);
+					
+			}
+			
+			for (a in musicVue.navStack[s].albums) {
+				if (musicVue.navStack[s].albums[a].name == data.content.context.album &&
+					musicVue.navStack[s].albums[a].artist == data.content.context.artist) {
+					musicVue.$set(musicVue.navStack[s].albums[a], 'img', data.content.pictures.img);
+					musicVue.$set(musicVue.navStack[s].albums[a], 'thumbnail', data.content.pictures.thumbnail);
+					musicVue.$set(musicVue.navStack[s].albums[a], 'tinyThumbnail', data.content.pictures.tinyThumbnail);
+				}
+			}
+			
 		}
 	}
 	

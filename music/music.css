@@ -70,6 +70,7 @@
 	margin-top: 50px;
 	margin-right: auto;
 	margin-left: auto;
+	pointer-events: none;
 }
 
 .dark .album-view-artwork-container .artwork {
@@ -262,7 +263,7 @@
 	
 }
 
-@media only screen and (min-width: 1400px) {
+@media only screen and (min-width: 1300px) {
 	
 	.album-collection,
 	.artist-collection {
@@ -272,7 +273,7 @@
 	
 }
 
-@media only screen and (min-width: 1800px) {
+@media only screen and (min-width: 1700px) {
 	
 	.album-collection,
 	.artist-collection {
