@@ -1,7 +1,7 @@
 Vue.component('AlbumItem', {
 	props: ["album", "inArtist", "stackPosition"],
-	template: '<div class="album-item" v-on:click="getAlbum({artist: album.artist, album: album.name, provider: album.provider}, stackPosition)">\
-				<div class="artwork-container" v-bind:title="album.name">\
+	template: '<div class="album-item" v-bind:class="{droppable: dragging}" v-on:click="getAlbum({artist: album.artist, album: album.name, provider: album.provider}, stackPosition)">\
+				<div class="artwork-container" v-bind:title="album.name" v-cloak @drop.prevent="pictureDrop($event, album)" @dragover.prevent="dragging = true" @drop="dragging=false" @dragleave="dragging=false">\
 					<img class="square-helper" src="common/square-helper.png">\
 					<div class="artwork" v-if="album.thumbnail || album.img" v-bind:style="{backgroundImage: \'url(\'+((album.thumbnail) ? album.thumbnail : album.img)+\')\'}"></div>\
 					<div class="artwork-placeholder" v-else></div>\
@@ -12,6 +12,16 @@ Vue.component('AlbumItem', {
 	methods: {
 		getAlbum: function(context, stackPosition) {
 			music.getContent("album", context, stackPosition);
+		},
+		pictureDrop: function(event, context) {
+			if (this.$parent.uploadPicture) {
+				this.$parent.uploadPicture(event, context);
+			}
+		}
+	},
+	data: function() {
+		return {
+			dragging: false
 		}
 	}
 });

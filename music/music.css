@@ -52,6 +52,7 @@
 	transition: opacity 0.3s ease, transform 0.3s ease;
 	overflow: hidden;
 	box-sizing: border-box;
+	pointer-events: none;
 }
 
 .album-view-artwork-container {
@@ -80,14 +81,26 @@
 .album-item .artwork-container:after,
 .artist-item .artist-img-container:after {
 	position: absolute;
-	content: "";
+	content: "Change picture";
 	opacity: 1;
-	transition: background-color 0.3s ease;
+	transition: background-color 0.3s ease, opacity 0.3s ease, color 0.3s ease;
 	border: 1px solid var(--menu-line);
 	top: 0;
 	bottom: 0;
 	left: 0;
 	right: 0;
+	pointer-events: none;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: transparent;
+	letter-spacing: var(--uppercase-spacing);
+	font-weight: 500;
+	text-transform: uppercase;
+	font-size: 0.8em;
+	padding: 20px;
+	text-align: center;
+	line-height: 1.3em;
 }
 
 .artist-item .artist-img, 
@@ -120,6 +133,17 @@
 	height: 100%;
 	position: absolute;
 	top: 0;
+}
+
+.album-item.droppable .artwork-container:after {
+	color: currentColor;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.album-item.droppable .artwork {
+	opacity: 0.2;
 }
 
 .artist-item .artist-placeholder:after {
