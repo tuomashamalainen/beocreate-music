@@ -16,6 +16,10 @@
 	min-width: 0;
 }
 
+.album-item.droppable {
+	cursor: copy;
+}
+
 .artist-item {
 	min-width: 0;
 }

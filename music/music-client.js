@@ -160,11 +160,11 @@ var musicVue = new Vue({
 				sortAlbums = [].concat(this.albums);
 				return sortAlbums.sort(function(a, b) {
 					if (a.date && b.date) {
-						if (a.date >= b.date) {
-							return 1
-						} else {
-							return -1;
-						}
+						return parseInt(a.date) - parseInt(b.date);
+					} else if (a.date) {
+						return -1;
+					} else if (b.date) {
+						return 1;
 					} else {
 						return 0;
 					}
