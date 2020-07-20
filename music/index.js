@@ -60,7 +60,7 @@ beo.bus.on('general', function(event) {
 			});
 			
 			beo.expressServer.use('/music/artists/', (req, res, next) => {
-				if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
+				if (!req.url.match(/^.*\.(png|jpg|jpeg)/ig)) return res.status(403).end('403 Forbidden');
 				next();
 			});
 			beo.expressServer.use("/music/artists/", express.static(settings.artistPicturePath));
@@ -272,16 +272,20 @@ async function findMissingArtistPictures(list = null) {
 							if (hifiberryJSON.url && !artistDB[artistDownloadQueue[a]].thumbnail) {
 								if (debug > 1) console.log("Downloading thumbnail for artist '"+artistDownloadQueue[a]+"'...");
 								// Download picture.
-								await beo.download(hifiberryJSON.url, settings.artistPicturePath, filename+"-thumb.jpg");
-								// Resize picture.
 								try {
-									await exec("convert \""+settings.artistPicturePath+"/"+filename+"-thumb.jpg\" -resize 400x400\\> \""+settings.artistPicturePath+"/"+filename+"-thumb.jpg\"");
-								} catch (error) {
-									console.log("Error resizing image:", error);
+									await beo.download(hifiberryJSON.url, settings.artistPicturePath, filename+"-thumb.jpg");
+									// Resize picture.
+									try {
+										await exec("convert \""+settings.artistPicturePath+"/"+filename+"-thumb.jpg\" -resize 400x400\\> \""+settings.artistPicturePath+"/"+filename+"-thumb.jpg\"");
+									} catch (error) {
+										console.log("Error resizing image:", error);
+									}
+									
+									artistDB[artistDownloadQueue[a]].thumbnail = filename+"-thumb.jpg";
+									newPictures.thumbnail = "/music/artists/"+encodeURIComponent(artistDB[artistDownloadQueue[a]].thumbnail).replace(/[!'()*]/g, escape);
+								} catch(error) {
+									console.error("There was an error downloading image:", error);
 								}
-								
-								artistDB[artistDownloadQueue[a]].thumbnail = filename+"-thumb.jpg";
-								newPictures.thumbnail = "/music/artists/"+encodeURIComponent(artistDB[artistDownloadQueue[a]].thumbnail).replace(/[!'()*]/g, escape);
 							}
 							fanartAPICall = await fetch("http://webservice.fanart.tv/v3/music/"+hifiberryJSON.mbid+"?api_key=084f2487ed559999e85996db790f864b");
 							if (fanartAPICall.status == 200) {
@@ -294,7 +298,7 @@ async function findMissingArtistPictures(list = null) {
 										newPictures.img = "/music/artists/"+encodeURIComponent(artistDB[artistDownloadQueue[a]].img).replace(/[!'()*]/g, escape);
 									}
 								} catch (error) {
-									console.error("There was an error downloading image: ", error);
+									console.error("There was an error downloading image:", error);
 								}
 							}
 							if (newPictures.thumbnail || newPictures.img) beo.sendToUI("music", "artistPictures", newPictures);
@@ -309,6 +313,37 @@ async function findMissingArtistPictures(list = null) {
 		if (changesMade) saveArtistDB();
 		artistDownloadQueue = [];
 	}
+}
+
+async function setArtistPicture(uploadPath, context) {
+	if (artistDB && artistDB[context.artist]) {
+		
+		urlParameters = "?variant="+Math.round(Math.random()*100);
+		fileExtension = (context.fileType == "image/jpeg") ? ".jpg" : ".png";
+		filename = context.artist.toLowerCase().replace(/\//g, "-").replace(/"/g, "");
+		newPictures = {artist: context.artist};
+		
+		if (context.imageKind == "thumbnail") {
+			if (debug) console.log("Updating thumbnail for artist '"+context.artist+"'.");
+			fs.copyFileSync(uploadPath, settings.artistPicturePath+"/"+filename+"-thumb"+fileExtension);
+			try {
+				await exec("convert \""+settings.artistPicturePath+"/"+filename+"-thumb"+fileExtension+"\" -resize 400x400\\> \""+settings.artistPicturePath+"/"+filename+"-thumb"+fileExtension+"\"");
+			} catch (error) {
+				console.log("Error resizing image:", error);
+			}
+			
+			artistDB[context.artist].thumbnail = filename+"-thumb"+fileExtension;
+			newPictures.thumbnail = "/music/artists/"+encodeURIComponent(artistDB[context.artist].thumbnail).replace(/[!'()*]/g, escape)+urlParameters;
+		}
+		
+		if (newPictures.thumbnail || newPictures.img) {
+			beo.sendToUI("music", "artistPictures", newPictures);
+			saveArtistDB();
+		}
+	}
+	fs.unlink(uploadPath, (err) => {
+		if (err) console.error("Error deleting file:", err);
+	});
 }
 
 var artistDBSaveTimeout;
@@ -348,7 +383,7 @@ function returnMusic(provider, type, musicData, context) {
 
 function processUpload(path, context) {
 	if (context.type == "artist") {
-		
+		setArtistPicture(path, context);
 	} else if (context.type == "album") {
 		if (context.provider &&
 			beo.extensions[context.provider] &&

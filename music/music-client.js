@@ -28,8 +28,8 @@ Vue.component('AlbumItem', {
 
 Vue.component('ArtistItem', {
 	props: ["artist", "stackPosition"],
-	template: '<div class="artist-item" v-on:click="getArtist({artist: artist.artist}, stackPosition)">\
-				<div class="artist-img-container" v-bind:title="artist.artist">\
+	template: '<div class="artist-item" v-bind:class="{droppable: dragging}" v-on:click="getArtist({artist: artist.artist}, stackPosition)">\
+				<div class="artist-img-container" v-bind:title="artist.artist" v-cloak @drop.prevent="pictureDrop($event, artist)" @dragover.prevent="dragging = true" @drop="dragging=false" @dragleave="dragging=false">\
 					<img class="square-helper" src="common/square-helper.png">\
 					<div class="artist-img" v-if="artist.img || artist.thumbnail" v-bind:style="{backgroundImage: \'url(\'+((artist.thumbnail) ? artist.thumbnail : artist.img)+\')\'}"></div>\
 					<div class="artist-placeholder" v-else></div>\
@@ -40,6 +40,16 @@ Vue.component('ArtistItem', {
 	methods: {
 		getArtist: function(context, stackPosition) {
 			music.getContent("artist", context, stackPosition);
+		},
+		pictureDrop: function(event, context) {
+			if (this.$parent.uploadPicture) {
+				this.$parent.uploadPicture(event, context, "thumbnail");
+			}
+		}
+	},
+	data: function() {
+		return {
+			dragging: false
 		}
 	}
 });
@@ -198,10 +208,11 @@ var musicVue = new Vue({
 			music.search(string);
 			musicVue.search.string = string;
 		},
-		uploadPicture: function(event, target) {
+		uploadPicture: function(event, target, kind) {
 			if (event.dataTransfer && event.dataTransfer.files) {
 				if (target.provider) {
 					context = {type: "artist", fileType: event.dataTransfer.files[0].type};
+					if (kind) context.imageKind = kind;
 					if (target.provider) context.provider = target.provider;
 					if (target.artist) context.artist = target.artist;
 					if (target.name) {

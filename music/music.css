@@ -139,14 +139,16 @@
 	top: 0;
 }
 
-.album-item.droppable .artwork-container:after {
+.album-item.droppable .artwork-container:after,
+.artist-item.droppable .artist-img-container:after {
 	color: currentColor;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
-.album-item.droppable .artwork {
+.album-item.droppable .artwork,
+.artist-item.droppable .artist-img {
 	opacity: 0.2;
 }
 
