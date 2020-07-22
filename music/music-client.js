@@ -34,8 +34,8 @@ Vue.component('ArtistItem', {
 					<div class="artist-img" v-if="artist.img || artist.thumbnail" v-bind:style="{backgroundImage: \'url(\'+((artist.thumbnail) ? artist.thumbnail : artist.img)+\')\'}"></div>\
 					<div class="artist-placeholder" v-else></div>\
 				</div>\
-				<div class="artist-name">{{ artist.artist }}</div>\
-				<div class="artist-albums" v-if="artist.albumLength">{{ artist.albumLength }} album{{(artist.albumLength != 1) ? "s" : ""}}</div>\
+				<div class="artist-item-text"><div class="artist-name">{{ artist.artist }}</div>\
+				<div class="artist-albums" v-if="artist.albumLength">{{ artist.albumLength }} album{{(artist.albumLength != 1) ? "s" : ""}}</div></div>\
 			</div>',
 	methods: {
 		getArtist: function(context, stackPosition) {
@@ -190,10 +190,14 @@ var musicVue = new Vue({
 		},
 		releaseDate: function(theTime) {
 			if (theTime.length > 4) {
-				if (Date.parse(theTime) == Date.parse(theTime.substring(0, 4))) {
+				try {
+					if (Date.parse(theTime) == Date.parse(theTime.substring(0, 4))) {
+						return theTime.substring(0, 4);
+					} else {
+						return Intl.DateTimeFormat(window.navigator.language, {month: "long", year: "numeric"}).format(new Date(theTime));
+					}
+				} catch (error) {
 					return theTime.substring(0, 4);
-				} else {
-					return Intl.DateTimeFormat(window.navigator.language, {month: "long", year: "numeric"}).format(new Date(theTime));
 				}
 			} else if (theTime) {
 				return theTime;
