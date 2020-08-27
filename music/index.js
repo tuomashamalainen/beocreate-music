@@ -25,6 +25,7 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
 var debug = beo.debug;
+var sources;
 
 var version = require("./package.json").version;
 
@@ -49,6 +50,8 @@ beo.bus.on('general', function(event) {
 			beo.extensions.sources.setSourceOptions &&
 			beo.extensions.sources.sourceDeactivated) {
 			sources = beo.extensions.sources;
+		} else {
+			sources = null;
 		}
 		
 		if (sources) {
@@ -75,6 +78,7 @@ beo.bus.on('general', function(event) {
 		}
 	}
 });	
+
 
 beo.bus.on('music', function(event) {
 	
@@ -147,6 +151,11 @@ beo.bus.on('music', function(event) {
 				//
 			});
 		}
+	}
+	
+	if (event.header == "revealMusic" &&
+		event.content.type && event.content.context) {
+		revealMusic(event.content.type, event.content.context);
 	}
 	
 	if (event.header == "previousSearches") {
@@ -379,6 +388,34 @@ function returnMusic(provider, type, musicData, context) {
 			musicData = getArtistPictures(musicData, true);
 		}
 	beo.sendToUI("music", "musicData", {type: type, data: musicData, context: context});
+}
+
+function revealMusic(type, context = {}) {
+	if (!context.provider && context.uri) {
+		if (beo.extensions.sources &&
+			beo.extensions.sources.getSources) {
+			allSources = beo.extensions.sources.getSources();
+			for (source in allSources) {
+				if (source != "music") {
+					if (allSources[source].metadata && 
+						allSources[source].metadata.uri &&
+						allSources[source].metadata.uri == context.uri) {
+						context.provider = source;
+					}
+				}
+			}
+		}
+	}
+	if (context.provider) {
+		if (type == "album") {
+			beo.extensions[context.provider].getMusic("album", context).then(album => {
+				album.type = "album";
+				delete context.uri;
+				album.context = context;
+				beo.sendToUI("music", "musicData", {type: "album", data: album, context: context});
+			});
+		}
+	}
 }
 
 function processUpload(path, context) {

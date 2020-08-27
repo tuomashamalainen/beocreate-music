@@ -185,6 +185,9 @@ var musicVue = new Vue({
 		}
 	},
 	methods: {
+		getMusic: function(type, context, stackPosition) {
+			music.getContent(type, context, stackPosition);
+		},
 		time: function(seconds) {
 			return Intl.DateTimeFormat(window.navigator.language, {minute: "numeric", second: "numeric"}).format(new Date(seconds * 1000)).replace(/^0?/g, '');
 		},
@@ -266,7 +269,7 @@ musicVue.$watch('albumSort', function(sort) {
 });
 
 $(document).on("music", function(event, data) {
-	if (data.header == "musicData") {
+	if (data.header == "musicData" && data.content.data) {
 		if (!data.content.context) {
 			if (data.content.type == "albums") {
 				musicVue.albums = data.content.data;
@@ -284,9 +287,20 @@ $(document).on("music", function(event, data) {
 					musicVue.search.currentSearch = data.content.context.searchString;
 				} else {
 					//if (data.content.data.type == "artist") data.content.data.img = "extensions/music/poetsofthefall.jpg";
-					data.content.data.id = stackPosition+1;
-					musicVue.navStack.splice(stackPosition+1, 2, data.content.data, {id: stackPosition+2, type: "placeholder"});
-					beo.showDeepMenu("music-navstack-item-"+(stackPosition+1));
+					if (!musicVue.navStack[stackPosition] || 
+						!_.isEqual(musicVue.navStack[stackPosition].context, data.content.context)) {
+						data.content.data.id = stackPosition+1;
+						musicVue.navStack.splice(stackPosition+1, 2, data.content.data, {id: stackPosition+2, type: "placeholder"});
+						try {
+							document.querySelector("#music-navstack-item-"+(stackPosition+1)+" .scroll-area").scrollTop = 0; // Scroll up the possibly reused view.
+						} catch (error) {
+							// Nothing to scroll up.
+						}
+						beo.showDeepMenu("music-navstack-item-"+(stackPosition+1), "music");
+					} else {
+						//beo.showDeepMenu("music-navstack-item-"+stackPosition, "music");
+						if (selectedExtension != "music") beo.showExtension("music");
+					}
 				}
 				dataRequested = false;
 			}
@@ -400,6 +414,14 @@ $(document).on("sources", function(event, data) {
 		} else {
 			musicVue.currentTrackPath = null;
 		}
+		
+		if (data.content.sources.music &&
+			data.content.sources.music.metadata &&
+			data.content.sources.music.metadata.uri) {
+			currentTrackPath = data.content.sources.music.metadata.uri;
+		} else {
+			currentTrackPath = null;
+		}
 	}
 
 	
@@ -434,10 +456,22 @@ function search(string) {
 	}
 }
 
+var currentTrackPath = null;
+function reveal(kind) { // Responds to links from Now Playing. Kind is "track", "album" or "artist". With no arguments, shows a list.
+	/*if (kind) {
+		
+	} else {*/
+		dataRequested = true;
+		beo.sendToProduct("music", "revealMusic", {type: "album", context: {uri: currentTrackPath}});
+	//}
+	return true;
+}
+
 return {
 	getContent: getContent,
 	play: play,
-	search: search
+	search: search,
+	reveal: reveal
 };
 
 })();

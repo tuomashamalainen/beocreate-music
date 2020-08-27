@@ -1,5 +1,5 @@
 <div id="music-app">
-	<div class="menu-screen source" id="music" data-icon="music.svg" data-menu-title="Music" data-stylesheet="music.css">
+	<div class="menu-screen source" id="music" data-icon="music.svg" data-menu-title="Music" data-stylesheet="music.css" data-namespace="music">
 		
 		<header>
 			<div class="back-button master"></div>
@@ -34,6 +34,10 @@
 			<div v-if="updating" class="menu-content">
 				<p class="loading">Updating library...</p>
 			</div>
+			<div v-if="!artists.length && !albums.length" class="menu-content">
+				<h1>No music</h1>
+				<p>Connect a USB storage device or add a NAS server in Music Player Daemon settings to add music.</p>
+			</div>
 			<div class="menu-content wide">
 				<div class="artist-collection">
 					<artist-item
@@ -56,6 +60,10 @@
 			</header>
 			<div v-if="updating" class="menu-content">
 				<p class="loading">Updating library...</p>
+			</div>
+			<div v-if="!artists.length && !albums.length" class="menu-content">
+				<h1>No music</h1>
+				<p>Connect a USB storage device or add a NAS server in Music Player Daemon settings to add music.</p>
 			</div>
 			<div class="menu-content wide">
 				<div class="album-collection">
@@ -82,7 +90,10 @@
 			<h1 class="large-title" v-if="item.type == 'artist'">{{ item.artist }}</h1>
 			
 			<div class="artist-header" v-if="item.type == 'artist' && item.img" v-bind:style="{backgroundImage: 'url('+item.img+')'}">
-				<h1>{{ item.artist }}</h1>
+				<div class="artist-header-fade"></div>
+				<div class="artist-header-title-wrap as-sidebar">
+					<h1>{{ item.artist }}</h1>
+				</div>
 			</div>
 			
 			<header v-if="item.type == 'artist' && !item.img" class="aux normal-only">
@@ -115,7 +126,7 @@
 						<!-- Compact album information -->
 						<div v-if="item.type == 'album'" class="album-info">
 							<h1>{{ item.name }}</h1>
-							<h3>{{ item.artist }}</h3>
+							<h3 @click="getMusic('artist', {artist: item.artist}, item.id)">{{ item.artist }}</h3>
 							<p class="compact-only"><span v-if="item.date">{{ releaseDate(item.date) }} • </span>{{ item.tracks.length }} track{{(item.tracks.length != 1) ? "s" : ""}} • {{ Math.round(item.time/60) }} minutes</p>
 						</div>
 						
@@ -257,5 +268,5 @@
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
 <script type="text/javascript" charset="utf-8" src="€/music-client.js"></script>
