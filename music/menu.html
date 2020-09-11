@@ -143,6 +143,8 @@
 								v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
 								v-bind:key="track.id"
 								v-on:click="play(track.id, item.id)"
+								v-on:context="trackMenu(track, item.id, track.id)"
+								v-on:hold="trackMenu(track, item.id, track.id)"
 							></menu-item>
 						</div>
 						<div v-if="!item.discs || item.discs.length == 0">
@@ -156,6 +158,8 @@
 								v-bind:hide-icon="(!track.path || track.path != currentTrackPath)"
 								v-bind:key="track.id"
 								v-on:click="play(track.id, item.id)"
+								v-on:context="trackMenu(track, item.id, track.id)"
+								v-on:hold="trackMenu(track, item.id, track.id)"
 							></menu-item>
 						</div>
 					</div>
@@ -264,6 +268,27 @@
 		
 		</div>
 		
+	</div>
+	
+	<div class="ask-menu" id="music-track-menu">
+		<div class="menu-item two-rows" onclick="beo.askOption(2);">
+			<div class="first-row"><div class="menu-text-wrap"><div class="menu-label ask-dynamic-0"></div></div></div> 
+			<div class="menu-custom-markup"><p class="ask-dynamic-1"></p></div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Play Next</div>
+			<div class="button pill grey" onclick="beo.askOption(1);">Play Last</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="clear-queue-prompt">
+		<h2>Start playing?</h2>
+		<p>Starting playback will clear the existing play queue.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Clear And Play</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
 	</div>
 </div>
 

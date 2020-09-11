@@ -80,6 +80,7 @@ beo.bus.on('general', function(event) {
 });	
 
 
+
 beo.bus.on('music', function(event) {
 	
 	if (event.header == "settings") {
@@ -160,6 +161,28 @@ beo.bus.on('music', function(event) {
 	
 	if (event.header == "previousSearches") {
 		beo.sendToUI("music", "previousSearches", settings.previousSearches);
+	}
+	
+	if (event.header == "playQueued" &&
+		event.content && event.content.position != undefined) {
+		playQueued(event.content.position);
+	}
+	
+	if (event.header == "getQueue") {
+		sendQueue();
+	}
+	
+	if (event.header == "clearQueue") {
+		clearQueue();
+	}
+	
+	if (event.header == "modifyQueue" && event.content.operation) {
+		modifyQueue(event.content.operation, event.content.data);
+	}
+	
+	if (event.header == "addToQueue" && 
+		event.content.position && event.content.type && event.content.context) {
+		addToQueue(event.content.position, event.content.type, event.content.context);
 	}
 });
 
@@ -406,6 +429,14 @@ function revealMusic(type, context = {}) {
 			}
 		}
 	}
+	if (!context.provider) {
+		// Search queue for this track.
+		for (t in masterQueue.tracks) {
+			if (masterQueue.tracks[t].path == context.uri && masterQueue.tracks[t].provider) {
+				context.provider = masterQueue.tracks[t].provider;
+			}
+		}
+	}
 	if (context.provider) {
 		if (type == "album") {
 			beo.extensions[context.provider].getMusic("album", context).then(album => {
@@ -433,12 +464,97 @@ function processUpload(path, context) {
 		}
 	}
 }
+
+// UP NEXT FUNCTIONALITY
+
+var masterQueue = {
+	position: 0,
+	providers: [],
+	tracks: []
+};
+
+function updateQueue(provider, operation, data) {
+	switch (operation) {
+		case "tracks":
+			// Gives complete queue.
+			masterQueue.position = data.position;
+			masterQueue.tracks = data.tracks;
+			break;
+	}
+	if (masterQueue.providers.indexOf(provider) == -1) masterQueue.providers.push(provider);
+	beo.sendToUI("now-playing", "queue", {source: "music", data: masterQueue, canClear: true});
+}
+
+function sendQueue() {
+	beo.sendToUI("now-playing", "queue", {source: "music", data: masterQueue, canClear: true});
+}
+
+function playQueued(position) {
+	if (masterQueue.tracks[position]) {
+		if (masterQueue.tracks[position].provider &&
+			beo.extensions[masterQueue.tracks[position].provider] &&
+			beo.extensions[masterQueue.tracks[position].provider].playQueued) {
+			beo.extensions[masterQueue.tracks[position].provider].playQueued(position);
+		}
+	}
+}
+
+function clearQueue() {
+	for (p in masterQueue.providers) {
+		if (beo.extensions[masterQueue.providers[p]] &&
+			beo.extensions[masterQueue.providers[p]].clearQueue) {
+			beo.extensions[masterQueue.providers[p]].clearQueue();
+		}
+	}
+}
+
+function modifyQueue(operation, data) {
+	var queueTrack = null;
+	if (data && data.id != undefined) {
+		for (t in masterQueue.tracks) {
+			if (masterQueue.tracks[t].queueID == data.id) {
+				queueTrack = masterQueue.tracks[t];
+			}
+		}
+	}
+	switch (operation) {
+		case "remove":
+			if (queueTrack && queueTrack.provider) {
+				if (beo.extensions[queueTrack.provider] &&
+					beo.extensions[queueTrack.provider].modifyQueue) {
+					beo.extensions[queueTrack.provider].modifyQueue("remove", data);
+				}
+			}
+			break;
+		case "playNext":
+			if (queueTrack && queueTrack.provider) {
+				if (beo.extensions[queueTrack.provider] &&
+					beo.extensions[queueTrack.provider].modifyQueue) {
+					beo.extensions[queueTrack.provider].modifyQueue("playNext", data);
+				}
+			}
+			break;
+	}
+}
+
+function addToQueue(position, type, context) {
+	if (position == "next" || position == "last") {
+		if (context.provider && 
+			beo.extensions[context.provider] && 
+			beo.extensions[context.provider].addToQueue) {
+			beo.extensions[context.provider].addToQueue(position, type, context);
+		}
+	}
+}
+
+
 	
 module.exports = {
 	version: version,
 	processUpload: processUpload,
 	registerProvider: registerProvider,
 	setLibraryUpdateStatus: setLibraryUpdateStatus,
-	returnMusic: returnMusic
+	returnMusic: returnMusic,
+	updateQueue: updateQueue
 };
 

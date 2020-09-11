@@ -56,7 +56,7 @@ Vue.component('ArtistItem', {
 
 Vue.component('MenuItem', {
 	props: ["label", "value", "valueLeft", "icon", "hideIcon", "iconRight", "chevron", "description"],
-	template: '<div class="menu-item" v-on:click="$emit(\'click\')" v-bind:class="{\'two-rows\': description, icon: icon, \'hide-icon\': hideIcon}">\
+	template: '<div class="menu-item" v-on:click="click()" v-bind:class="{\'two-rows\': description, icon: icon, \'hide-icon\': hideIcon}" @mouseout="endHold()" @mouseup="endHold()" @mousemove="endHold()" @touchmove="endHold()" @touchend="endHold()" @mousedown="startHold($event)" @touchstart="startHold($event)"  @contextmenu="contextMenu($event)">\
 					<div class="first-row">\
 						<div v-if="icon" class="menu-icon left" v-bind:style="{maskImage: \'url(\'+icon+\')\'}"></div>\
 						<div v-if="valueLeft" v-bind:class="{\'with-icon\': icon}" class="menu-value left">{{ valueLeft }}</div>\
@@ -68,7 +68,50 @@ Vue.component('MenuItem', {
 					<div class="menu-custom-markup" v-if="description">\
 						<p>{{ description }}</p>\
 					</div>\
-				</div>'
+				</div>',
+	methods: {
+		startHold: function(event) {
+			if (event.targetTouches) {
+				this.holdPosition = [event.targetTouches[0].pageX, event.targetTouches[0].pageY];
+			} else {
+				this.holdPosition = [event.pageX, event.pageY];
+			}
+			this.holding = true;
+			var that = this;
+			this.holdTimeout = setTimeout(function() {
+				that.canClick = false;
+				that.$emit("hold");
+			}, 500);
+		},
+		endHold: function() {
+			if (this.holding) {
+				this.holding = false;
+				clearTimeout(this.holdTimeout);
+				this.holdTimeout = null;
+				setTimeout(function() {
+					this.canClick = true;
+				}, 20);
+			}
+		},
+		click: function() {
+			if (this.canClick) this.$emit("click");
+		},
+		contextMenu: function(event) {
+			if (this.$listeners.context) {
+				this.endHold();
+				event.preventDefault();
+				this.$emit("context");
+			}
+		}
+	},
+	data: function() {
+		return {
+			canClick: true,
+			holdTimeout: null,
+			holding: false,
+			holdPosition: [0,0]
+		}
+	}
 });
 
 Vue.component('MenuTabs', {
@@ -210,6 +253,9 @@ var musicVue = new Vue({
 		},
 		play: function(index, stackIndex) {
 			music.play(index, stackIndex);
+		},
+		trackMenu: function(track, stackIndex, index) {
+			music.musicMenu("track", track, stackIndex, index);
 		},
 		searchWithString: function(string) {
 			music.search(string);
@@ -457,21 +503,36 @@ function search(string) {
 }
 
 var currentTrackPath = null;
-function reveal(kind) { // Responds to links from Now Playing. Kind is "track", "album" or "artist". With no arguments, shows a list.
-	/*if (kind) {
-		
-	} else {*/
-		dataRequested = true;
-		beo.sendToProduct("music", "revealMusic", {type: "album", context: {uri: currentTrackPath}});
-	//}
+function reveal(path = currentTrackPath) { 
+	console.log(path);
+	dataRequested = true;
+	beo.sendToProduct("music", "revealMusic", {type: "album", context: {uri: path}});
+	
 	return true;
+}
+
+function musicMenu(type, context, stackIndex, index) {
+	if (type == "track") {
+		beo.ask("music-track-menu", [context.name, context.artist], [
+			function() {
+				beo.sendToProduct("music", "addToQueue", {position: "next", type: "track", context: context});
+			},
+			function() {
+				beo.sendToProduct("music", "addToQueue", {position: "last", type: "track", context: context});
+			},
+			function() {
+				play(index, stackIndex);
+			},
+		]);
+	}
 }
 
 return {
 	getContent: getContent,
 	play: play,
 	search: search,
-	reveal: reveal
+	reveal: reveal,
+	musicMenu: musicMenu
 };
 
 })();
