@@ -144,8 +144,7 @@ beo.bus.on('music', function(event) {
 	}
 	
 	if (event.header == "playMusic") {
-		if (event.content.index != undefined &&
-			event.content.type &&
+		if (event.content.type &&
 			event.content.context && 
 			event.content.context.provider) {
 			beo.extensions[event.content.context.provider].playMusic(event.content.index, event.content.type, event.content.context).then(response => {

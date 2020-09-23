@@ -71,6 +71,8 @@
 				    	v-for="album in sortedAlbums"
 				      	v-bind:album="album"
 				      	v-bind:key="album.id"
+				      	v-on:context="albumMenu(album, null, album.id)"
+						v-on:hold="albumMenu(album, null, album.id)"
 				    ></album-item>
 				</div>
 			</div>
@@ -173,6 +175,8 @@
 						      	v-bind:album="album"
 						      	v-bind:in-artist="true"
 						      	v-bind:key="album.id"
+						      	v-on:context="albumMenu(album, null, album.id)"
+								v-on:hold="albumMenu(album, null, album.id)"
 						    ></album-item>
 						</div>
 					</div>
@@ -227,6 +231,8 @@
 						v-bind:value-left="track.number"
 						v-bind:key="track.id"
 						v-on:click="play(track.id, 'search')"
+						v-on:context="trackMenu(track, 'search', track.id)"
+						v-on:hold="trackMenu(track, 'search', track.id)"
 					></menu-item>
 				</div>
 				<div v-else>
@@ -238,6 +244,8 @@
 						v-bind:value-left="track.number"
 						v-bind:key="track.id"
 						v-on:click="play(track.id, 'search')"
+						v-on:context="trackMenu(track, 'search', track.id)"
+						v-on:hold="trackMenu(track, 'search', track.id)"
 					></menu-item>
 				</div>
 
@@ -262,6 +270,8 @@
 				    	v-for="album in search.albums"
 				      	v-bind:album="album"
 				      	v-bind:key="album.id"
+				      	v-on:context="albumMenu(album, null, album.id)"
+						v-on:hold="albumMenu(album, null, album.id)"
 				    ></album-item>
 				</div>
 			</div>
@@ -271,8 +281,30 @@
 	</div>
 	
 	<div class="ask-menu" id="music-track-menu">
+		<h2>Song</h2>
 		<div class="menu-item two-rows" onclick="beo.askOption(2);">
-			<div class="first-row"><div class="menu-text-wrap"><div class="menu-label ask-dynamic-0"></div></div></div> 
+			<div class="first-row">
+				<div class="menu-text-wrap">
+					<div class="menu-label ask-dynamic-0"></div>
+					<div class="menu-value button">Play</div>
+				</div></div> 
+			<div class="menu-custom-markup"><p class="ask-dynamic-1"></p></div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Play Next</div>
+			<div class="button pill grey" onclick="beo.askOption(1);">Play Last</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="music-album-menu">
+		<h2>Album</h2>
+		<div class="menu-item two-rows" onclick="beo.askOption(2);">
+			<div class="first-row">
+				<div class="menu-text-wrap">
+					<div class="menu-label ask-dynamic-0"></div>
+					<div class="menu-value button">Play</div>
+				</div></div> 
 			<div class="menu-custom-markup"><p class="ask-dynamic-1"></p></div>
 		</div>
 		<div class="ask-buttons">

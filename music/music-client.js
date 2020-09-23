@@ -1,6 +1,6 @@
 Vue.component('AlbumItem', {
 	props: ["album", "inArtist", "stackPosition"],
-	template: '<div class="album-item" v-bind:class="{droppable: dragging}" v-on:click="getAlbum({artist: album.artist, album: album.name, provider: album.provider}, stackPosition)">\
+	template: '<div class="album-item" v-bind:class="{droppable: dragging}" v-on:click="click()" @mouseout="endHold()" @mouseup="endHold()" @mousemove="endHold()" @touchmove="endHold()" @touchend="endHold()" @mousedown="startHold($event)" @touchstart="startHold($event)"  @contextmenu="contextMenu($event)">\
 				<div class="artwork-container" v-bind:title="album.name" v-cloak @drop.prevent="pictureDrop($event, album)" @dragover.prevent="dragging = true" @drop="dragging=false" @dragleave="dragging=false">\
 					<img class="square-helper" src="common/square-helper.png">\
 					<div class="artwork" v-if="album.thumbnail || album.img" v-bind:style="{backgroundImage: \'url(\'+((album.thumbnail) ? album.thumbnail : album.img)+\')\'}"></div>\
@@ -17,11 +17,50 @@ Vue.component('AlbumItem', {
 			if (this.$parent.uploadPicture) {
 				this.$parent.uploadPicture(event, context);
 			}
+		},
+		startHold: function(event) {
+			if (event.targetTouches) {
+				this.holdPosition = [event.targetTouches[0].pageX, event.targetTouches[0].pageY];
+			} else {
+				this.holdPosition = [event.pageX, event.pageY];
+			}
+			this.holding = true;
+			var that = this;
+			this.holdTimeout = setTimeout(function() {
+				that.canClick = false;
+				that.$emit("hold");
+			}, 500);
+		},
+		endHold: function() {
+			if (this.holding) {
+				this.holding = false;
+				clearTimeout(this.holdTimeout);
+				this.holdTimeout = null;
+				setTimeout(function() {
+					this.canClick = true;
+				}, 20);
+			}
+		},
+		click: function() {
+			if (this.canClick) {
+				this.getAlbum({artist: this.album.artist, album: this.album.name, provider: this.album.provider}, this.stackPosition);
+			}
+		},
+		contextMenu: function(event) {
+			if (this.$listeners.context) {
+				this.endHold();
+				event.preventDefault();
+				this.$emit("context");
+			}
 		}
 	},
 	data: function() {
 		return {
-			dragging: false
+			dragging: false,
+			canClick: true,
+			holdTimeout: null,
+			holding: false,
+			holdPosition: [0,0]
 		}
 	}
 });
@@ -55,8 +94,12 @@ Vue.component('ArtistItem', {
 });
 
 Vue.component('MenuItem', {
-	props: ["label", "value", "valueLeft", "icon", "hideIcon", "iconRight", "chevron", "description"],
-	template: '<div class="menu-item" v-on:click="click()" v-bind:class="{\'two-rows\': description, icon: icon, \'hide-icon\': hideIcon}" @mouseout="endHold()" @mouseup="endHold()" @mousemove="endHold()" @touchmove="endHold()" @touchend="endHold()" @mousedown="startHold($event)" @touchstart="startHold($event)"  @contextmenu="contextMenu($event)">\
+	props: ["label", "value", "valueLeft", "icon", "hideIcon", "iconRight", "chevron", "description", "thumbnail"],
+	template: '<div class="menu-item" v-on:click="click()" v-bind:class="{\'two-rows-new\': description, icon: icon, \'hide-icon\': hideIcon}" @mouseout="endHold()" @mouseup="endHold()" @mousemove="endHold()" @touchmove="endHold()" @touchend="endHold()" @mousedown="startHold($event)" @touchstart="startHold($event)"  @contextmenu="contextMenu($event)">\
+					<div class="menu-thumbnail" v-if="thumbnail">\
+						<img v-bind:src="thumbnail">\
+					</div>\
+					<div class="menu-item-right">\
 					<div class="first-row">\
 						<div v-if="icon" class="menu-icon left" v-bind:style="{maskImage: \'url(\'+icon+\')\'}"></div>\
 						<div v-if="valueLeft" v-bind:class="{\'with-icon\': icon}" class="menu-value left">{{ valueLeft }}</div>\
@@ -67,6 +110,7 @@ Vue.component('MenuItem', {
 					</div>\
 					<div class="menu-custom-markup" v-if="description">\
 						<p>{{ description }}</p>\
+					</div>\
 					</div>\
 				</div>',
 	methods: {
@@ -256,6 +300,9 @@ var musicVue = new Vue({
 		},
 		trackMenu: function(track, stackIndex, index) {
 			music.musicMenu("track", track, stackIndex, index);
+		},
+		albumMenu: function(album, stackIndex, index) {
+			music.musicMenu("album", album, stackIndex, index);
 		},
 		searchWithString: function(string) {
 			music.search(string);
@@ -486,6 +533,10 @@ function play(index, stackIndex) {
 	}
 }
 
+function playContext(type, context) {
+	beo.sendToProduct("music", "playMusic", {type: type, context: context});
+}
+
 function search(string) {
 	if (!string) {
 		beo.showDeepMenu("music-search");
@@ -522,6 +573,20 @@ function musicMenu(type, context, stackIndex, index) {
 			},
 			function() {
 				play(index, stackIndex);
+			},
+		]);
+	}
+	if (type == "album") {
+		beo.ask("music-album-menu", [context.name, context.artist], [
+			function() {
+				beo.sendToProduct("music", "addToQueue", {position: "next", type: "album", context: context});
+			},
+			function() {
+				beo.sendToProduct("music", "addToQueue", {position: "last", type: "album", context: context});
+			},
+			function() {
+				console.log(context);
+				playContext("album", context);
 			},
 		]);
 	}
