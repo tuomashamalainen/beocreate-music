@@ -94,10 +94,10 @@ Vue.component('ArtistItem', {
 });
 
 Vue.component('MenuItem', {
-	props: ["label", "value", "valueLeft", "icon", "hideIcon", "iconRight", "chevron", "description", "thumbnail"],
+	props: ["label", "value", "valueLeft", "icon", "hideIcon", "iconRight", "chevron", "description", "thumbnail", "thumbnailPlaceholder"],
 	template: '<div class="menu-item" v-on:click="click()" v-bind:class="{\'two-rows-new\': description, icon: icon, \'hide-icon\': hideIcon}" @mouseout="endHold()" @mouseup="endHold()" @mousemove="endHold()" @touchmove="endHold()" @touchend="endHold()" @mousedown="startHold($event)" @touchstart="startHold($event)"  @contextmenu="contextMenu($event)">\
-					<div class="menu-thumbnail" v-if="thumbnail">\
-						<img v-bind:src="thumbnail">\
+					<div class="menu-thumbnail" v-if="thumbnail || thumbnailPlaceholder" v-bind:style="{backgroundImage: \'url(\'+thumbnail+\')\'}">\
+						<div class="menu-thumbnail-placeholder" v-if="thumbnailPlaceholder && !thumbnail" v-bind:style="{maskImage: \'url(\'+thumbnailPlaceholder+\')\'}"></div>\
 					</div>\
 					<div class="menu-item-right">\
 					<div class="first-row">\
@@ -320,7 +320,7 @@ var musicVue = new Vue({
 						context.type = "album";
 					}
 					beo.uploadFile(
-						{types: ["image/jpeg", "image/png"], customData: context},
+						{types: ["image/jpeg", "image/png"], fileExtensions: [".png", ".jpg", ".jpeg"], customData: context},
 						"music",
 						event.dataTransfer.files[0]
 					);
